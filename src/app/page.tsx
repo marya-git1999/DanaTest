@@ -4,11 +4,12 @@ import { TableFrame } from "@/components/main/tableFrame";
 import type { Domain } from "@/interfaces/domain";
 import { useQuery } from "@tanstack/react-query";
 import { SelectStatus } from "@/components/main/selectStatus";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SearchBox } from "@/components/main/searchBox";
 import { IsActive } from "@/components/main/isActive";
 import { DomainModal } from "@/components/main/modal";
 import { Button } from "@/components/ui/button";
+import { useRouter, useSearchParams } from "next/navigation";
 
 async function getData(search: string, status: string, isActive: boolean) {
   const param = new URLSearchParams();
@@ -41,12 +42,28 @@ async function getData(search: string, status: string, isActive: boolean) {
 }
 
 export default function Home() {
-  const [status, setStatus] = useState("");
-  const [search, setSearch] = useState("");
-  const [isActive, setIsActive] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [status, setStatus] = useState(searchParams.get("status") || "");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [isActive, setIsActive] = useState(
+    searchParams.get("isActive") === "true"
+  );
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Domain | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (status) params.set("status", status);
+    if (search) params.set("search", search);
+    if (isActive) params.set("isActive", "true");
+
+    const queryString = params.toString();
+    router.push(`?${queryString}`, { scroll: false });
+  }, [status, search, isActive, router]);
 
   const { data, isLoading, refetch } = useQuery<Domain[]>({
     queryKey: ["domains", status, search, isActive],
